@@ -23,12 +23,9 @@ class SellRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_group_id' => 'required|exists:products,product_group_id',
-            'quantity' => [
-                'required',
-                'integer',
-                new SellMaxRule($this->product_group_id)
-            ]
+            'products' => 'required|array',
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer',
         ];
     }
 }

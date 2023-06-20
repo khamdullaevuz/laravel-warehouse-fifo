@@ -20,15 +20,27 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
-        for($i = 1; $i < 4; $i++)
-        {
-            Product::create([
-                'product_group_id' => 1,
-                'name' => 'Samsung Galaxy S23 Ultra',
-                'stock' => $i * 100,
-                'price' => 10000000,
-                'income_date' => now()->addDays($i),
-            ]);
-        }
+        $product = Product::create([
+            'name' => 'Samsung Galaxy S21 Ultra',
+        ]);
+
+        $product->batches()->createMany([
+            [
+                'price' => 20000000,
+                'stock' => 100,
+                'income_date' => '2023-06-18 09:00:00',
+            ],
+            [
+                'price' => 19900000,
+                'stock' => 200,
+                'income_date' => '2023-06-19 09:00:00',
+            ],
+            [
+                'price' => 19800000,
+                'stock' => 300,
+                'income_date' => '2023-06-20 09:00:00',
+            ],
+
+        ]);
     }
 }

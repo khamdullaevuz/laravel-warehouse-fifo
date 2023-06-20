@@ -4,10 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['product_group_id', 'name', 'stock', 'price', 'income_date'];
+    protected $fillable = ['name'];
+
+    public function batches(): HasMany
+    {
+        return $this->hasMany(Batch::class);
+    }
 }

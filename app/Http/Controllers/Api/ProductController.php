@@ -5,53 +5,62 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SellRequest;
 use App\Http\Resources\ProductCollection;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $data = $request->validate([
-            'product_group_id' => 'required|exists:products,product_group_id',
-        ]);
+        return new ProductCollection(Product::with(['batches' => function($query){
+            $query->orderBy('income_date', 'asc');
+        }])->get());
+    }
 
-        $product_group_id = $data['product_group_id'];
-
-        $products = Product::query()
-            ->where('product_group_id', $product_group_id)
-            ->orderBy('income_date')
-            ->get();
-
-        return new ProductCollection($products);
+    public function show(Product $product)
+    {
+        return new ProductResource($product->load(['batches' => function($query){
+            $query->orderBy('income_date', 'asc');
+        }]));
     }
 
     public function sell(SellRequest $request)
     {
         $data = $request->validated();
-        $quantity = $data['quantity'];
-        $product_group_id = $data['product_group_id'];
-
-        $products = Product::query()
-            ->where('product_group_id', $product_group_id)
-            ->orderBy('income_date')
-            ->get();
+        $products = $data['products'];
 
         foreach($products as $product)
         {
-            if($product->stock > $quantity)
+            $_product = Product::with(['batches' => function($query){
+                $query->orderBy('income_date', 'asc');
+            }])->find($product['id']);
+            $quantity = $product['quantity'];
+            $batches = $_product->batches;
+            $max = $batches->sum('stock');
+            if($quantity > $max)
             {
-                $product->stock -= $quantity;
-                $product->save();
-                break;
-            }else{
-                $quantity -= $product->stock;
-                $product->stock = 0;
-                $product->save();
+                return response()->json([
+                    'message' => 'Not enough stock for product ' . $_product['name']
+                ], 400);
             }
-
+            foreach($batches as $batch)
+            {
+                if($batch->stock > $quantity)
+                {
+                    $batch->stock -= $quantity;
+                    $batch->save();
+                    break;
+                }else{
+                    $quantity -= $batch->stock;
+                    $batch->stock = 0;
+                    $batch->save();
+                }
+            }
         }
 
-        return new ProductCollection($products);
+        return response()->json([
+            'message' => 'Products sold successfully'
+        ]);
     }
 }
