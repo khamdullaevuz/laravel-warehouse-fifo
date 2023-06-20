@@ -13,9 +13,7 @@ class ProductController extends Controller
 {
     public function index()
     {
-        return new ProductCollection(Product::with(['batches' => function($query){
-            $query->orderBy('income_date', 'asc');
-        }])->get());
+        return new ProductCollection(Product::all());
     }
 
     public function show(Product $product)
